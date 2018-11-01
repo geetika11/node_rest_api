@@ -1,11 +1,7 @@
 var Sequelize = require('sequelize')
 var DT=Sequelize.DataTypes
 
-var db = new Sequelize({
-    dialect: 'sqlite',
-    storage: __dirname + '/test2.db',
-  })
-
+var db=require('./index')
 var Profile=db.define('profile',{
     username:{
         type: DT.STRING(50),
@@ -28,10 +24,6 @@ var Profile=db.define('profile',{
    newpassword:{
        type:DT.STRING(30),
        allowNull:true
-   }
+   }});
 
-
-});
-db.sync().then(() => console.log('profile table has been successfully created, if one doesn\'t exist'))
-.catch(error => console.log('This error occured', error));
 module.exports=Profile;

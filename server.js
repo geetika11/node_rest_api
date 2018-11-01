@@ -1,18 +1,15 @@
-const express = require('express')
-const app = express()
 
+var express = require('express')
+var app = express()
 app.use(express.json())
 app.use(express.urlencoded({
   extended: true
 }))
+app.use('/', require('./routes/articledetails'))
+app.use('/', require('./routes/userdetails'))
+app.use('/', require('./routes/commentdetails'))
+app.listen(4949, () => {
+    console.log('Server started http://localhost:4949')
+  })
 
 
-app.use('/', require('./postarticle'))
-app.use('/comment', require('./models/comment'))
-app.use('/profile', require('./models/profile'))
-app.use('/',require('./getuser'))
-app.listen(3939, () => {
-      console.log('Server started http://localhost:3939')
-    })
- 
-  

@@ -1,13 +1,6 @@
-const express = require('express')
-const app = express()
 var jwt1 = require('jwt-simple')
  var config = require('./config');
- var User=require('./models/user.js')
-
-var req=require('request')      
-var res=require('response')
- 
-module.exports=function(token1,req,res){
+ module.exports=function(token1,req,res){
     //console.log("value of one two three "+JSON.stringify(config)) 
     console.log(token1)
     if (!token1) { return res.status(401).send({ auth: false, message: 'No token provided.' }); }
