@@ -8,9 +8,9 @@ var config = require('./config');
 var Article = require('./models/article')
 var jwt1 = require('jwt-simple')
 var randomstring = require('randomstring')
+var Tag=require('./models/tags')
 const sqlite3 = require('sqlite3');
 var CommentonArticle = require('./models/comment')
-var extend = require('extend');
 var app = express()
 app.set('port', 8080)
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -75,14 +75,6 @@ app.route('/users/login')
             .catch((error) => res.status(400).json({ message: 'Request could not be fullfilled,Please try again:(  ' }))
     });
 
-//api to get all the user
-
-app.route('/usersall')
-    .get((req, res) => {
-        User.findAll().then(function (user) {
-            res.status(200).json(user)
-        });
-    })
 
 
 //api to get the current user fully done acc to api
@@ -277,7 +269,7 @@ app.route('/articles/:slug')
     });
 
 
-//api to delete the particular article
+//api to delete the particular article fully done acc to api
 app.delete('/articles/:slug', (req, res) => {
     var token = req.headers['token'];
     if (!token) { return res.status(401).send({ auth: false, message: 'No token provided.' }); }
@@ -293,14 +285,14 @@ app.delete('/articles/:slug', (req, res) => {
 
                 let db = new sqlite3.Database('./models/article3.db');
                 db.run(`delete from articles where slug=?`, [slug1])
-                res.status(201).json({ message: 'delete b ho gaya re' })
+                res.status(201).json({ message: 'article deleted successfully' })
             }
         })
 })
 
 //api to get and post the comments
 
-//api to post the comment on the particular article
+//api to post the comment on the particular article fully done acc to api
 app.route('/articles/:slug/comments')
     .post((req, res) => {
         var token = req.headers['token'];
@@ -313,90 +305,125 @@ app.route('/articles/:slug/comments')
                 if (!user) {
                     res.status(404).json({ message: 'The requested User does not exist' })
                 } else {
-                    const slug = req.params.slug
-                    Article.findOne({ where: { slug: slug } }).then(function (artone) {
+                    Profile.findOne({where:{email:user.email}}).then(function (profile){                      
+                           
+                        const slug = req.params.slug
+                        Article.findOne({ where: { slug: slug } }).then(function (artone) {
                         CommentonArticle.create({
                             body: req.body.body
                         })
                             .then(commenton => {
-                                res.status(201).json(commenton)
+                                var pro = { username: profile.username, bio: profile.bio, image: profile.image, following: 'false' }
+                                var comments = { id:commenton.id,createdAt:commenton.createdAt,updatedAt:commenton.updatedAt,body:commenton.body, author: pro }
+                                res.status(201).json(comments)
+                                //res.status(201).json(pro)
                             })
                             .catch(error => {
                                 res.status(403)
                             })
                     })
+                    })
+
+                    
                 }
             })
 
     })
-//to get all the comments on the particular article
+//to get all the comments on the particular article but not acc to api but still we can submit it like this if cant find any option,
 app.route('/articles/:slug/comments')
     .get((req, res) => {
-        CommentonArticle.findAll().then(function (art) {
-            res.status(200).json(art)
-            console.log('my comments' + art)
-        });
+        const slug=req.params.slug
+        Article.findOne({ where: { slug: slug } }).then(function (article){
+            Profile.findOne({where:{username:article.author}}).then(function(profile){
+                CommentonArticle.findAll().then(function (art) {
+                    var pro = { username: profile.username, bio: profile.bio, image: profile.image, following: 'false' }
+                   var comments = { comment:art,author: pro }
+                                         
+                    res.status(200).json(comments)
+                   // console.log('my comments' + art)
+                })
+            })            
+        })        
     })
 
-//api to delete the particular comment
+//api to delete the particular comment and it is working fully acc to api
 app.delete('/articles/:slug/comments/:cid', (req, res) => {
     var token = req.headers['token'];
     if (!token) { return res.status(401).send({ auth: false, message: 'No token provided.' }); }
     const payload = jwt1.decode(token, config.secret, process.env.TOKEN_SECRET);
     var id = JSON.stringify(payload.sub)
-
     User.findOne({ where: [{ id: id }] })
         .then(function (user) {
             if (!user) {
                 res.status(404).json({ message: 'The requested User does not exist' })
             } else {
                 const cid1 = parseInt(req.params.cid)
-
                 let db = new sqlite3.Database('./models/test2.db');
                 db.run(`delete from comments where id=?`, [cid1])
-                res.status(201).json({ message: 'delete b ho gaya re' })
+                res.status(201).json({ message: 'comment deleted successfully' })
             }
         })
 })
 
 
+//experiment with favt
+app.route('/articles/:slug/favorite')
+.post((req, res) => {
+    var token = req.headers['token'];
+    if (!token) { return res.status(401).send({ auth: false, message: 'No token provided.' }); }
+    const payload = jwt1.decode(token, config.secret, process.env.TOKEN_SECRET);
+    var id = JSON.stringify(payload.sub)
 
+        User.findOne({ where: [{ id: id }] })
+        .then(function (user) {
+        if (!user) {
+            res.status(404).json({ message: 'The requested User does not exist' })
+        } else {
+            const slug1 = req.params.slug
+            Article.findOne({ where: [{ slug: slug1 }] })
+            .then(function(article){
+                var ab=article.favcount
+                var a
+                if(ab%2==0){
+                    a=  ab+1
+                }
+                else{
+                    a=ab-1
+                }
+             
+              console.log('va;ue of a '+article.favcount+1)
+              let db = new sqlite3.Database('./models/article4.db');
+                db.run(`update articles set favcount=? where slug=?`,[a,slug1])
+                res.status(201).json(article)
 
+            })
+            
+           
+        }
+    })
 
-
-//get all the profiles from the profile db  --TBR 
-app.route('/profile')
-    .get((req, res) => {
-        Profile.findAll().then(function (art) {
-            res.status(200).json(art)
-        });
     })
 
 
-
-//api to delete all the articles
-app.delete('/articles', (req, res) => {
-    //const cid1 = parseInt(req.params.cid)
-    const sqlite3 = require('sqlite3');
-    let db = new sqlite3.Database('./models/test.db');
-    db.run(`delete from articles`)
-})
-
-
-    //update the particular user
-    .put((req, res) => {
-        const username1 = req.params.username;
-        const sqlite3 = require('sqlite3');
-        var bio = req.body.bio;
-        var image = req.body.image
-
-
-        let db = new sqlite3.Database('./models/test.db');
-        db.run(`update profiles set bio=?,image=? where username=?`, [bio, image, username1])
-        res.status(200).json('message:profile updated')
-    });
-
-
+//exprmtn with tags post api
+app.route('/tags')
+    .post((req, res) => { 
+        Tag.create({
+            tags:req.body.tags
+        }).then(tag => {
+            if(!tag){
+                res.status(400).json("message:error occured")
+                }
+            else{
+            res.status(201).json(tag)
+            }})
+    })
+    .get((req,res)=>{
+        Tag.findAll().then(tag=>{
+            res.status(201).json(tag)
+        })
+    })
+  
 
 app.get('/me', function (req, res) {
     var token = req.headers['token'];
@@ -411,10 +438,6 @@ app.get('/me', function (req, res) {
         res.status(200).send(decoded);
     });
 });
-
-
-//api to get the current user
-
 
 app.get('/logout', (req, res) => {
     if (req.session.user && req.cookies.user_sid) {

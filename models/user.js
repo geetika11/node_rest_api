@@ -24,6 +24,8 @@ var User=db.define('user',{
     
 });
 
+console.log('hye')
+
 db.sync().then(() => console.log('users table has been successfully created, if one doesn\'t exist'))
 .catch(error => console.log('This error occured', error));
 module.exports=User;

@@ -3,7 +3,7 @@ var DT = Sequelize.DataTypes
 
 var db = new Sequelize({
     dialect: 'sqlite',
-    storage: __dirname + '/article3.db',
+    storage: __dirname + '/article4.db',
 })
 
 var Article = db.define('article', {
@@ -27,6 +27,9 @@ var Article = db.define('article', {
         allowNull: true,
         
        
+    },
+    favcount:{
+        type:DT.INTEGER(10)
     }
     ,
     author:{
