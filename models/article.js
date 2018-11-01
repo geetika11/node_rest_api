@@ -26,6 +26,7 @@ var Article = db.define('article', {
         type:DT.STRING(30),
         allowNull: false,   
 
-    }
+    },
+  
 });
 module.exports = Article;

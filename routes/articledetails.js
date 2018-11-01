@@ -89,10 +89,11 @@ app.route('/articles')
                     body: req.body.body,
                     slug: slug,
                     author: user.username,
+                    favcount:0
                 })
                     .then(function (article) {
                         var pro = { username: user.username, bio: user.bio, image: user.image, following: 'false' }
-                        var artic = { slug: article.slug, title: article.title, description: article.description, body: article.body, createdAt: article.createdAt, updatedAt: article.updatedAt, author: pro }
+                        var artic = { slug: article.slug, title: article.title, description: article.description, body: article.body,favoritedCount:article.favcount, createdAt: article.createdAt, updatedAt: article.updatedAt, author: pro }
                         res.status(201).json({ article: artic })
                     })
             }
@@ -160,4 +161,65 @@ app.delete('/articles/:slug', (req, res) => {
             }
         })
 })
+
+//exprmnt with the favortie and unfav
+app.route('/articles/:slug/favorite')
+    .post((req, res) => {
+        var token = req.headers['token'];
+        var id = authorization(token, req, res)
+        
+        User.findOne({ where: [{ id: id }] }).then(function (user) {
+            if (!user) {
+                res.status(404).json({ message: 'The requested User does not exist' })
+            } else {
+                var slug=req.params.slug
+                Article.findOne({ where: [{ slug: slug }] }).then(function (article) {
+                    if (!article) {
+                        res.status(404).json({ message: 'The requested User does not exist' })
+                    } else {
+                        
+                        var favcount= article.favcount+1
+                        var favorited='true'
+                        db.run(`update articles set favcount=?`,[favcount])
+                        var pro = { username: user.username, bio: user.bio, image: user.image, following: 'false' }
+                        var art={slug:article.slug,title:article.title,description:article.description,body:article.body,createdAt:article.createdAt,updatedAt:article.updatedAt,favorited:favorited,favoritescount:favcount,author:pro}
+
+                        res.status(200).json({ article: art })
+                    }
+                })
+            }
+        })
+    })
+    app.route('/articles/:slug/favorite')
+    .delete((req, res) => {
+        var token = req.headers['token'];
+        var id = authorization(token, req, res)
+        var favcount;
+        User.findOne({ where: [{ id: id }] }).then(function (user) {
+            if (!user) {
+                res.status(404).json({ message: 'The requested User does not exist' })
+            } else {
+                var slug=req.params.slug
+                Article.findOne({ where: [{ slug: slug }] }).then(function (article) {
+                    if (!article) {
+                        res.status(404).json({ message: 'The requested User does not exist' })
+                    } else {
+                        if(article.favcount==0)
+                       { favcount= article.favcount}
+                        else{
+                            favcount=article.favcount-1
+                        }
+                        var favorited='false'
+                        var pro = { username: user.username, bio: user.bio, image: user.image, following: 'false' }
+                        db.run(`update articles set favcount=?`,[favcount])
+                        var art={slug:article.slug,title:article.title,description:article.description,body:article.body,createdAt:article.createdAt,updatedAt:article.updatedAt,favorited:favorited,favoritescount:favcount,author:pro}
+
+                        res.status(200).json({ article: art })
+                    }
+                })
+            }
+        })
+    })
+
+
 module.exports = app
