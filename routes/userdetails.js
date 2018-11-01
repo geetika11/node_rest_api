@@ -1,4 +1,4 @@
-var Profile=require('../models/profile')
+
 var User = require('../models/user')
 const { Router } = require('express')
 var config = require('../config');
@@ -8,22 +8,15 @@ const sqlite3 = require('sqlite3');
 var authorization=require('../auth')
 let db = new sqlite3.Database('./models/database.db');
 
-//api to signup
+//api to signup fully done acc to api and checked
 route.post('/users',(req, res) => {
 
         User.create({
             username: req.body.username,
             email: req.body.email,
             password: req.body.password
-        }),
-            Profile.create({
-                username: req.body.username,
-                email: req.body.email,
-                //password: req.body.password,
-                newpassword: '',
-                image: '',
-                bio: ''
-            }).then(user => {
+        })
+            .then(user => {
                 if (user) {
                     const playload = {
                         sub: user.id,
@@ -39,24 +32,20 @@ route.post('/users',(req, res) => {
             })
     });
 
-//api to login the user fully done acc to api
+//api to login the user fully done acc to api checked
 route.post('/users/login',(req, res) => {
         var email = req.body.email;
         var password = req.body.password;
         User.findOne({ where: [{ email: email, password: password }] }).then(function (user) {
             if (!user) {
                 res.status(404).json({ message: 'The requested User does not exist' })
-            } else {
-                Profile.findOne({ where: [{ email: email }] })
-                    .then
-                    (function (profile) {
-                        const playload = {
+            } else { const playload = {
                             sub: user.id
                         };
                         var token = jwt1.encode(playload, config.secret, process.env.TOKEN_SECRET);
-                        var authuser = { email: req.body.email, token: token, username: user.username, bio: profile.bio, image: profile.image }
+                        var authuser = { email: req.body.email, token: token, username: user.username, bio: user.bio, image: user.image }
                         res.status(201).json({ user: authuser })
-                    })
+                    
             }
 
         })
@@ -65,7 +54,7 @@ route.post('/users/login',(req, res) => {
 
 
 
-//api to get the current user fully done acc to api
+//api to get the current user fully done acc to api checked
 route.get('/user',(req, res) => {
         var token = req.headers['token'];
         var id=authorization(token,req, res)
@@ -73,41 +62,34 @@ route.get('/user',(req, res) => {
             if (!user) {
                 res.status(404).json({ message: 'The requested User does not exist' })
             } else {
-                Profile.findOne({ where: [{ email: user.email }] })
-                    .then
-                    (function (profile) {
-                        var authuser = { email: profile.email, token: token, username: user.username, bio: profile.bio, image: profile.image }
+                 var authuser = { email: user.email, token: token, username: user.username, bio: user.bio, image: user.image }
                         res.status(201).json({ user: authuser })
-                    })
+                  
             }
-        })
+        });
            
     })
 
-    //update the current user fully done acc to api
- .put('/user',(req, res) => {
-        var email = req.body.email
-        var username = req.body.username
-        var password = req.body.password
-        var image = req.body.image
-        var bio = req.body.bio
+    //update the current user fully done acc to api  bs 2 bar me update ho rha h wese checked h
+ route.put('/user',(req, res) => {
+        
         var token = req.headers['token'];
         var token1 = token
         var id=authorization(token,req, res)   
         User.findOne({ where: [{ id: id }] }).then(function (user) {
             if (!user) {
                 res.status(404).json({ message: 'The requested User does not exist' })
-            } else {                
-                Profile.findOne({ where: [{ email: user.email }] })
-                    .then
-                    (function (profile) {
-                        db.run(`update users set username=?,email=?,password=? where id=?`, [username, email, password, id])
-                        db.run(`update profiles set username=?,email=?,newpassword=?,bio=?,image=? where username=?`, [username, email, password, bio, image, profile.username])
-                        var updateuser = { email: profile.email, token: token1, username: profile.username, bio: profile.bio, image: profile.image }
-                    res.status(201).json({ user: updateuser })
-                        
-                    })
+            } else {  
+                var email = req.body.email
+                 var username = req.body.username
+                var password = req.body.password
+                var image = req.body.image
+                var bio = req.body.bio
+                db.run(`update users set username=?,email=?,password=?,image=?,bio=? where id=?`, [username, email, password,image,bio, id])
+                   var updateuser = { email: user.email, token: token1, username: user.username, bio: user.bio, image: user.image }
+                   res.status(201).json({ user: updateuser }) 
             }
+           
         }) 
              
     });

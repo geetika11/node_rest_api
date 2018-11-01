@@ -1,5 +1,5 @@
 //api to get and post the article and get article are not acc to the requiremnt
-var Profile = require('../models/profile')
+
 var User = require('../models/user')
 var Article = require('../models/article')
 var randomstring = require('randomstring')
@@ -8,57 +8,57 @@ var authorization = require('../auth')
 let db = new sqlite3.Database('./models/database.db');
 var express = require('express')
 var app = express()
-app.route('/articles')
-    .get((req, res) => {
-        for (let key of Object.keys(req.query)) {
-            switch (key) {
-                case 'author':
-                    author1 = req.query.author
-                    Profile.findOne({ where: [{ username: author1 }] })
-                        .then(function (profile) {
-                            Article.findAll({ where: { author: author1 } }).then(function (article) {
-                                if (!article) {
-                                    res.status(404).json('message:This article do not exist');
-                                } else {
-                                    var pro = { username: profile.username, bio: profile.bio, image: profile.image, following: 'false' }
-                                    artic = new Array()
-                                    article.forEach(function (art) {
-                                        artic.push({ slug: art.slug, title: art.title, description: art.description, body: art.body, createdAt: art.createdAt, updatedAt: art.updatedAt, author: pro })
-                                    });
-                                    res.status(201).json({ article: artic })
-                                }
-                            })
-                        })
-                    break;
-                case 'limit':
-                    limit = req.query.limit
-                    Article.findAll().then(function (article) {
-                        if (!article) {
-                            res.status(404).json('message:This article do not exist');
-                        }
-                        else {
-                            i = parseInt(limit)
-                            artic = new Array()
-                            console.log('value of i ' + i)
-                            article.forEach(function (art) {
-                                Profile.findOne({ where: [{ username: art.author }] })
-                                    .then(function (profile) {
-                                        if (i > 0) {
-                                            var pro = { username: profile.username, bio: profile.bio, image: profile.image, following: 'false' }
-                                            artic.push({ slug: art.slug, title: art.title, description: art.description, body: art.body, createdAt: art.createdAt, updatedAt: art.updatedAt, author: pro })
-                                            i = i - 1
-                                        }
-                                        else {
-                                            res.status(201).json({ article: artic })
-                                        }
-                                    })
-                            })
-                        }
-                    })
-                    break;
-            }
-        }
-    });
+// app.route('/articles')
+//     .get((req, res) => {
+//         for (let key of Object.keys(req.query)) {
+//             switch (key) {
+//                 case 'author':
+//                     author1 = req.query.author
+//                     Profile.findOne({ where: [{ username: author1 }] })
+//                         .then(function (profile) {
+//                             Article.findAll({ where: { author: author1 } }).then(function (article) {
+//                                 if (!article) {
+//                                     res.status(404).json('message:This article do not exist');
+//                                 } else {
+//                                     var pro = { username: profile.username, bio: profile.bio, image: profile.image, following: 'false' }
+//                                     artic = new Array()
+//                                     article.forEach(function (art) {
+//                                         artic.push({ slug: art.slug, title: art.title, description: art.description, body: art.body, createdAt: art.createdAt, updatedAt: art.updatedAt, author: pro })
+//                                     });
+//                                     res.status(201).json({ article: artic })
+//                                 }
+//                             })
+//                         })
+//                     break;
+//                 case 'limit':
+//                     limit = req.query.limit
+//                     Article.findAll().then(function (article) {
+//                         if (!article) {
+//                             res.status(404).json('message:This article do not exist');
+//                         }
+//                         else {
+//                             i = parseInt(limit)
+//                             artic = new Array()
+//                             console.log('value of i ' + i)
+//                             article.forEach(function (art) {
+//                                 Profile.findOne({ where: [{ username: art.author }] })
+//                                     .then(function (profile) {
+//                                         if (i > 0) {
+//                                             var pro = { username: profile.username, bio: profile.bio, image: profile.image, following: 'false' }
+//                                             artic.push({ slug: art.slug, title: art.title, description: art.description, body: art.body, createdAt: art.createdAt, updatedAt: art.updatedAt, author: pro })
+//                                             i = i - 1
+//                                         }
+//                                         else {
+//                                             res.status(201).json({ article: artic })
+//                                         }
+//                                     })
+//                             })
+//                         }
+//                     })
+//                     break;
+//             }
+//         }
+//     });
 
 
 //api to get the articles
@@ -72,7 +72,7 @@ app.route('/article')
    })
     });
 
-//api to post the article fully done acc to api
+//api to post the article fully done acc to api checked
 app.route('/articles')
     .post((req, res) => {
         var token = req.headers['token'];
@@ -85,21 +85,20 @@ app.route('/articles')
             if (!user) {
                 res.status(404).json({ message: 'The requested User does not exist' })
             } else {
-                Profile.findOne({ where: [{ email: user.email }] })
-                    .then(function (profile) {
+                
                         Article.create({
                             title: req.body.title,
                             description: req.body.description,
                             body: req.body.body,
                             slug: slug,
-                            author: profile.username,
+                            author: user.username,
                         })
                             .then(function (article) {
-                                var pro = { username: profile.username, bio: profile.bio, image: profile.image, following: 'false' }
+                                var pro = { username: user.username, bio: user.bio, image: user.image, following: 'false' }
                                 var artic = { slug: article.slug, title: article.title, description: article.description, body: article.body, createdAt: article.createdAt, updatedAt: article.updatedAt, author: pro }
                                 res.status(201).json({ article: artic })
 
-                            })
+                          
                     })
             }
         })
@@ -115,9 +114,9 @@ app.route('/articles/:slug')
                 res.status(404).json('message:This article do not exist');
             } else {
                 var username = article.author
-                Profile.findOne({ where: [{ username: username }] })
-                    .then(function (profile) {
-                        var pro = { username: profile.username, bio: profile.bio, image: profile.image, following: 'false' }
+                User.findOne({ where: [{ username: username }] })
+                    .then(function (user) {
+                        var pro = { username: user.username, bio: user.bio, image: user.image, following: 'false' }
                         var artic = { slug: article.slug, title: article.title, description: article.description, body: article.body, createdAt: article.createdAt, updatedAt: article.updatedAt, author: pro }
                         res.status(201).json({ article: artic })
 
@@ -126,7 +125,7 @@ app.route('/articles/:slug')
         });
 
     })
-    // update the particular article fully done acc to api
+    // update the particular article fully done acc to api checked working fine
     .put((req, res) => {
         var token = req.headers['token'];
         var id = authorization(token, req, res)
@@ -135,9 +134,7 @@ app.route('/articles/:slug')
             if (!user) {
                 res.status(404).json({ message: 'The requested User does not exist' })
             } else {
-                Profile.findOne({ where: [{ email: user.email }] })
-                    .then
-                    (function (profile) {
+               
                         const slug = req.params.slug
                         var newtitle = req.body.title;
                         var description = req.body.description
@@ -146,20 +143,20 @@ app.route('/articles/:slug')
                             length: 10,
                             charset: 'alphanumeric'
                         })
-                        Article.findOne({ where: { author: profile.username } }).then(function (article) {
+                        Article.findOne({ where: { author: user.username } }).then(function (article) {
 
                             db.run(`update articles set title=?, description=?,body=?,slug=? where slug=?`, [newtitle, description, body, slug1, slug])
-                            var pro = { username: profile.username, bio: profile.bio, image: profile.image, following: 'false' }
+                            var pro = { username: user.username, bio: user.bio, image: user.image, following: 'false' }
                             var artic = { slug: slug1, title: newtitle, description: description, body: body, createdAt: article.createdAt, updatedAt: article.updatedAt, author: pro }
                             res.status(201).json({ article: artic })
-                        })
+                      
                     })
             }
         })
     });
 
 
-//api to delete the particular article fully done acc to api
+//api to delete the particular article fully done acc to api checked
 app.delete('/articles/:slug', (req, res) => {
     var token = req.headers['token'];
     var id = authorization(token, req, res)
@@ -170,8 +167,6 @@ app.delete('/articles/:slug', (req, res) => {
                 res.status(404).json({ message: 'The requested User does not exist' })
             } else {
                 const slug1 = req.params.slug
-
-
                 db.run(`delete from articles where slug=?`, [slug1])
                 res.status(201).json({ message: 'article deleted successfully' })
             }

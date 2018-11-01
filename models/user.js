@@ -17,7 +17,19 @@ var User=db.define('user',{
     password:{
         type:DT.STRING(30),
         allowNull:false
-    }
+    },
+    image:{
+        type:DT.STRING(200),
+        allowNull:true
+    },
+    bio:{
+        type:DT.STRING(500),
+        allowNull:true
+    },
+    following:{
+        type:DT.STRING(500),
+        allowNull:true
+    },
     
 });
 module.exports=User;
