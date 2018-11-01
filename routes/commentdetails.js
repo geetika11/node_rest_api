@@ -1,5 +1,3 @@
-//api to get and post the comments
-
 var User = require('../models/user')
 var Article = require('../models/article')
 var express = require('express')
@@ -8,8 +6,6 @@ var CommentonArticle = require('../models/comment')
 const sqlite3 = require('sqlite3');
 var authorization=require('../auth')
 let db = new sqlite3.Database('./models/database.db');
-
-
 //api to post the comment on the particular article fully done acc to api checked
 app.route('/articles/:slug/comments')
     .post((req, res) => {
@@ -63,7 +59,6 @@ app.delete('/articles/:slug/comments/:cid', (req, res) => {
                 res.status(404).json({ message: 'The requested User does not exist' })
             } else {
                 const cid1 = parseInt(req.params.cid)
-               
                 db.run(`delete from comments where id=?`, [cid1])
                 res.status(201).json({ message: 'comment deleted successfully' })
             }
