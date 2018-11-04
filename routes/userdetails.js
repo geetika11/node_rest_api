@@ -1,4 +1,4 @@
-
+var Follow = require('../models/follow')
 var User = require('../models/user')
 const { Router } = require('express')
 var config = require('../config');
@@ -6,11 +6,10 @@ const route = Router()
 var jwt1 = require('jwt-simple')
 const sqlite3 = require('sqlite3');
 var authorization = require('../auth')
-let db = new sqlite3.Database('./models/database.db');
+let db = new sqlite3.Database('./models/testing.db');
 
-//api to signup fully done acc to api and checked
+//api to signup using token based authentication
 route.post('/users', (req, res) => {
-
     User.create({
         username: req.body.username,
         email: req.body.email,
@@ -32,7 +31,7 @@ route.post('/users', (req, res) => {
         })
 });
 
-//api to login the user fully done acc to api checked
+//api to login the user using token based authentication
 route.post('/users/login', (req, res) => {
     var email = req.body.email;
     var password = req.body.password;
@@ -46,16 +45,13 @@ route.post('/users/login', (req, res) => {
             var token = jwt1.encode(playload, config.secret, process.env.TOKEN_SECRET);
             var authuser = { email: req.body.email, token: token, username: user.username, bio: user.bio, image: user.image }
             res.status(201).json({ user: authuser })
-
         }
-
     })
-
 });
 
 
 
-//api to get the current user fully done acc to api checked
+//api to get the current user 
 route.get('/user', (req, res) => {
     var token = req.headers['token'];
     var id = authorization(token, req, res)
@@ -65,14 +61,13 @@ route.get('/user', (req, res) => {
         } else {
             var authuser = { email: user.email, token: token, username: user.username, bio: user.bio, image: user.image }
             res.status(201).json({ user: authuser })
-
         }
     });
 
 })
+
 //api to follow the particular user
 route.post('/profiles/:username/follow', (req, res) => {
-
     var token = req.headers['token'];
     var id = authorization(token, req, res)
     var username = req.params.username
@@ -80,15 +75,15 @@ route.post('/profiles/:username/follow', (req, res) => {
         if (!user) {
             res.status(404).json({ message: 'The requested User does not exist' })
         } else {
-            console.log('value of user ' + JSON.stringify(user))
+            Follow.create({
+                followuser: req.params.username,
+                followedby: user.username
 
-            console.log('hye')
+            })
             User.findOne({ where: [{ username: username }] }).then(function (user1) {
-                if (!user) {
+                if (!user1) {
                     res.status(404).json({ message: 'The requested User does not exist' })
                 } else {
-                    console.log('value of user following' + JSON.stringify(user1))
-                    console.log('value of user following ' + user1.following)
                     var follow = user1.following = 'true'
                     var pro = { username: user1.username, bio: user1.bio, image: user1.image, following: follow }
                     res.status(200).json({ profile: pro })
@@ -98,9 +93,8 @@ route.post('/profiles/:username/follow', (req, res) => {
     })
 })
 
-//api to unfollow the user
+//api to unfollow the user by loggedin user 
 route.delete('/profiles/:username/follow', (req, res) => {
-
     var token = req.headers['token'];
     var id = authorization(token, req, res)
     var username = req.params.username
@@ -115,8 +109,7 @@ route.delete('/profiles/:username/follow', (req, res) => {
                 if (!user) {
                     res.status(404).json({ message: 'The requested User does not exist' })
                 } else {
-                    console.log('value of user following' + JSON.stringify(user1))
-                    console.log('value of user following ' + user1.following)
+                    db.run(`delete from follows where followuser=? and followedby=? `, [user1.username, user.username])
                     var follow = user1.following = 'false'
                     var pro = { username: user1.username, bio: user1.bio, image: user1.image, following: follow }
                     res.status(200).json({ profile: pro })
@@ -126,28 +119,25 @@ route.delete('/profiles/:username/follow', (req, res) => {
     })
 })
 
-//update the current user fully done acc to api  bs 2 bar me update ho rha h wese checked h
+//update the current user 
 route.put('/user', (req, res) => {
-
     var token = req.headers['token'];
     var token1 = token
     var id = authorization(token, req, res)
-    User.findOne({ where: [{ id: id }] }).then(function (user) {
-        if (!user) {
+    var email = req.body.email
+    var username = req.body.username
+    var password = req.body.password
+    var image = req.body.image
+    var bio = req.body.bio
+    User.findOne({ where: [{ id: id }] }).then(function (user1) {
+        if (!user1) {
             res.status(404).json({ message: 'The requested User does not exist' })
         } else {
-            var email = req.body.email
-            var username = req.body.username
-            var password = req.body.password
-            var image = req.body.image
-            var bio = req.body.bio
             db.run(`update users set username=?,email=?,password=?,image=?,bio=? where id=?`, [username, email, password, image, bio, id])
-            var updateuser = { email: user.email, token: token1, username: user.username, bio: user.bio, image: user.image }
-            res.status(201).json({ user: updateuser })
+            var updateduser = { email: user1.email, token: token1, username: user1.username, bio: user1.bio, image: user1.image }
+            res.status(201).json({ user1: updateduser })
         }
-
     })
-
 });
 
 module.exports = route
