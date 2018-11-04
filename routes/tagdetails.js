@@ -8,5 +8,8 @@ app.route('/tags')
         Tag.findAll().then(function (tag) {
             res.status(201).json({tag})
         })
+        .catch(error => {
+            res.status(404).json({message:'Not Found'})
+        }) 
     });
 module.exports=app

@@ -29,9 +29,13 @@ app.route('/articles')
                                     article.forEach(function (art) {
                                         artic.push({ slug: art.slug, title: art.title, description: art.description, body: art.body, createdAt: art.createdAt, updatedAt: art.updatedAt, author: pro })
                                     });
-                                    res.status(201).json({ article: artic })
+                                    res.status(202).json({ article: artic })
                                 }
                             })
+
+                            .catch(error => {
+                                res.status(404).json({message:'Not Found'})
+                            }) 
                         })
                     break;
                 case 'limit':
@@ -53,12 +57,16 @@ app.route('/articles')
                                             i = i - 1
                                         }
                                         else {
-                                            res.status(201).json({ article: artic })
+                                            res.status(202).json({ article: artic })
                                         }
                                     })
                             })
                         }
+                        
                     })
+                    .catch(error => {
+                        res.status(404).json({message:'Not Found'})
+                    }) 
                     break;
                 case 'tag':
                     tag = req.query.tag
@@ -68,10 +76,12 @@ app.route('/articles')
                             res.status(404).json('message:This article do not exist');
                         }
                         else {
-                            console.log('fd' + JSON.stringify(article))
-                            res.status(201).json(article)
+                            res.status(202).json(article)
                         }
                     })
+                    .catch(error => {
+                        res.status(404).json({message:'Not Found'})
+                    }) 
                     break;
                 case 'favorited':
                     favorited = req.query.favorited
@@ -82,10 +92,13 @@ app.route('/articles')
                             Article.findOne({ where: [{ slug: art.slug }] })
                                 .then(function (article) {
                                     favs.push(article)
-                                    res.status(201).json({ article: favs })
+                                    res.status(202).json({ article: favs })
                                 })
                         })
                     })
+                    .catch(error => {
+                        res.status(404).json({message:'Not Found'})
+                    }) 
                     break;
             }
         }
@@ -103,11 +116,14 @@ app.get('/articles/feed', (req, res) => {
             Follow.findOne({ where: [{ followedby: user.username }] }).then(function (arti) {
                 var followeduser = arti.followuser
                 Article.findAll({ where: [{ author: followeduser }] }).then(function (articles) {
-                    res.status(201).json(articles)
+                    res.status(202).json(articles)
                 })
             })
         }
-    });
+    })
+    .catch(error => {
+        res.status(403).json({message:'Forbidden'})
+    }) 
 
 })
 
@@ -116,12 +132,12 @@ app.get('/articles/feed', (req, res) => {
 app.route('/article')
     .get((req, res) => {
         Article.findAll().then(function (article) {
-            res.status(201).json(article)
+            res.status(202).json(article)
         })
     });
 
 
-//api to post the article user can only post if he is logged in
+//api to post the article user can only post if he is logged in and give the values of tag title description body
 app.route('/articles')
     .post((req, res) => {
         var token = req.headers['token'];
@@ -157,6 +173,9 @@ app.route('/articles')
                     })
             }
         })
+        .catch(error => {
+            res.status(404).json({message:'Not Found'})
+        }) 
     })
 
 //api to get and update the particluar article  
@@ -172,13 +191,16 @@ app.route('/articles/:slug')
                     .then(function (user) {
                         var pro = { username: user.username, bio: user.bio, image: user.image, following: 'false' }
                         var artic = { slug: article.slug, title: article.title, description: article.description, body: article.body, favoritedCount: article.favcount, createdAt: article.createdAt, updatedAt: article.updatedAt, author: pro }
-                        res.status(201).json({ article: artic })
+                        res.status(202).json({ article: artic })
                     })
             }
-        });
+        })
+        .catch(error => {
+            res.status(404).json({message:'Not Found'})
+        }) 
 
     })
-    // update the particular article 
+    // update the particular article while updating give the values of title, description, body, tags
     .put((req, res) => {
         var token = req.headers['token'];
         var id = authorization(token, req, res)
@@ -205,6 +227,9 @@ app.route('/articles/:slug')
                 })
             }
         })
+        .catch(error => {
+            res.status(404).json({message:'Not Found'})
+        }) 
     });
 
 //api to delete the particular article 
@@ -218,13 +243,16 @@ app.delete('/articles/:slug', (req, res) => {
             } else {
                 const slug1 = req.params.slug
                 db.run(`delete from articles where slug=?`, [slug1])
-                res.status(201).json({ message: 'article deleted successfully' })
+                res.status(200).json({ message: 'article deleted successfully' })
             }
         })
+        .catch(error => {
+            res.status(410).json({message:'Gone'})
+
+        }) 
 })
 
 //api to unfavorite the article
-
 app.route('/articles/:slug/favorite')
     .delete((req, res) => {
         var token = req.headers['token'];
@@ -245,13 +273,16 @@ app.route('/articles/:slug/favorite')
                         }
                         var favorited = 'false'
                         var pro = { username: user.username, bio: user.bio, image: user.image, following: 'false' }
-                        db.run(`update articles set favcount=?`, [favcount])
+                        db.run(`update articles set favcount=? where slug=?`, [favcount, slug])
                         var art = { slug: article.slug, title: article.title, description: article.description, body: article.body, createdAt: article.createdAt, updatedAt: article.updatedAt, favorited: favorited, favoritescount: favcount, author: pro }
                         res.status(200).json({ article: art })
                     }
                 })
             }
         })
+        .catch(error => {
+            res.status(404).json({message:'Not Found'})
+        }) 
     })
 
 
@@ -284,7 +315,9 @@ app.post('/articles/:slug/favorite', (req, res) => {
             })
         }
     })
-
+    .catch(error => {
+        res.status(404).json({message:'Not Found'})
+    }) 
 })
 
 
